@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Automático · Demonstração Funcional</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='%23f5a301'/%3E%3Ccircle cx='12' cy='12' r='4' fill='%23101216'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0b0d10; --panel:#171a20; --panel2:#1d212a; --line:#262b33;
+  --txt:#f2f3f5; --mut:#9aa3ad; --faint:#6f7885;
+  --ambar:#f5a301; --ambar2:#ffbe3c; --ambar-ink:#1d1402;
+  --ok:#2bd06c; --warn:#f5a301; --info:#4aa8ff; --bad:#ff6b5e; --violet:#c792ff;
+  --hair:rgba(255,255,255,.08); --hair-soft:rgba(255,255,255,.05);
+  --glass-hi:rgba(255,240,214,.075); --glass-lo:rgba(255,255,255,.02);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.3); --shadow-md:0 12px 28px -10px rgba(0,0,0,.55);
+  --shadow-lg:0 26px 52px -16px rgba(0,0,0,.62); --shadow-xl:0 36px 74px -20px rgba(0,0,0,.72);
+  --ring:0 0 0 3px rgba(245,163,1,.22);
+  --rad:16px; --font:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --ease:cubic-bezier(.22,.8,.28,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:var(--font);line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(900px 520px at 10% -8%,rgba(245,163,1,.15),transparent 62%),radial-gradient(760px 560px at 108% 10%,rgba(245,120,1,.07),transparent 60%),radial-gradient(1000px 700px at 50% 118%,rgba(74,168,255,.05),transparent 62%),linear-gradient(180deg,#0e1013,var(--bg) 340px)}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E")}
+button{font-family:var(--font);cursor:pointer}
+::selection{background:rgba(245,163,1,.32)}
+:focus-visible{outline:2px solid var(--ambar);outline-offset:2px;border-radius:8px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.13);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background-color:rgba(255,255,255,.22)}
+::-webkit-scrollbar-track{background:transparent}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.975)}to{opacity:1;transform:none}}
+@keyframes pulseBdg{0%,100%{box-shadow:0 0 0 0 rgba(245,163,1,.4)}55%{box-shadow:0 0 0 5px rgba(245,163,1,0)}}
+.app{position:relative;z-index:1;display:grid;grid-template-columns:252px 1fr;min-height:100vh}
+aside{background:linear-gradient(180deg,rgba(23,26,32,.78),rgba(11,12,15,.62));backdrop-filter:blur(20px) saturate(1.3);-webkit-backdrop-filter:blur(20px) saturate(1.3);border-right:1px solid var(--hair-soft);box-shadow:inset -1px 0 0 rgba(0,0,0,.35),18px 0 40px -30px rgba(0,0,0,.8);padding:24px 16px 20px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.logo{display:flex;align-items:center;gap:11px;font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px 20px}
+.logo svg{color:var(--ambar);flex:none;padding:6px;width:42px;height:42px;border-radius:13px;background:linear-gradient(150deg,rgba(245,163,1,.2),rgba(245,163,1,.06));border:1px solid rgba(245,163,1,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 18px -8px rgba(245,163,1,.55)}
+.logo small{display:block;font-size:9.5px;letter-spacing:.28em;color:var(--mut);font-weight:700;margin-top:1px}
+.nav-btn{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:transparent;border:1px solid transparent;color:var(--mut);font-size:14.5px;font-weight:600;padding:11px 12px;border-radius:11px;min-height:44px;transition:background .18s var(--ease),color .18s var(--ease),transform .18s var(--ease),border-color .18s var(--ease),box-shadow .18s var(--ease)}
+.nav-btn:hover{color:var(--txt);background:rgba(255,255,255,.045);transform:translateX(2px)}
+.nav-btn.sel{background:linear-gradient(120deg,rgba(245,163,1,.17),rgba(245,163,1,.07));border-color:rgba(245,163,1,.32);color:var(--ambar2);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 8px 20px -10px rgba(245,163,1,.5)}
+.nav-btn .bdg{margin-left:auto;background:linear-gradient(180deg,var(--ambar2),var(--ambar));color:var(--ambar-ink);font-size:11px;font-weight:900;border-radius:999px;padding:1px 8px;box-shadow:0 4px 10px -4px rgba(245,163,1,.6);animation:pulseBdg 2.6s ease-in-out infinite}
+aside .foot{margin-top:auto;font-size:11.5px;color:var(--faint);line-height:1.55;border:1px solid var(--hair-soft);background:rgba(255,255,255,.03);border-radius:12px;padding:12px}
+main{padding:28px 32px 64px;min-width:0;width:100%;max-width:1380px;margin:0 auto}
+.topbar{display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap;animation:rise .32s var(--ease) both}
+.topbar h1{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1.15;background:linear-gradient(180deg,#fffdf6,#e8ddc4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.topbar .hoje{color:var(--mut);font-size:13.5px;margin-top:3px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;border-radius:11px;padding:11px 18px;min-height:42px;border:1px solid var(--hair);background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.03));color:var(--txt);box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.07);transition:transform .16s var(--ease),box-shadow .16s var(--ease),border-color .16s var(--ease),filter .16s var(--ease)}
+.btn:hover{transform:translateY(-1px);border-color:rgba(245,163,1,.45);box-shadow:var(--shadow-md),inset 0 1px 0 rgba(255,255,255,.09)}
+.btn:active{transform:translateY(0)}
+.btn-pri{background:linear-gradient(180deg,#ffc84d,var(--ambar));color:var(--ambar-ink);border-color:rgba(255,226,150,.6);box-shadow:0 12px 26px -10px rgba(245,163,1,.55),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(120,74,0,.35)}
+.btn-pri:hover{filter:brightness(1.05);border-color:rgba(255,232,170,.85)}
+.btn-mini{padding:6px 11px;min-height:32px;font-size:12.5px;border-radius:9px}
+.btn-danger:hover{border-color:rgba(255,107,94,.55);color:#ffb4ab;background:rgba(255,107,94,.1)}
+.view{display:none}
+.view.sel{display:block;animation:rise .3s var(--ease) both}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:22px}
+.kpi{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--glass-hi),var(--glass-lo) 58%);border:1px solid var(--hair);border-radius:var(--rad);padding:19px 20px 16px;box-shadow:var(--shadow-md),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:transform .18s var(--ease),box-shadow .18s var(--ease),border-color .18s var(--ease);animation:rise .26s var(--ease) both}
+.kpi:nth-child(2){animation-delay:.03s}.kpi:nth-child(3){animation-delay:.06s}.kpi:nth-child(4){animation-delay:.09s}
+.kpi::before{content:"";position:absolute;top:0;left:20px;right:20px;height:2px;border-radius:0 0 4px 4px;background:linear-gradient(90deg,transparent,rgba(245,163,1,.7),transparent)}
+.kpi:nth-child(2)::before{background:linear-gradient(90deg,transparent,rgba(74,168,255,.6),transparent)}
+.kpi:nth-child(3)::before{background:linear-gradient(90deg,transparent,rgba(199,146,255,.55),transparent)}
+.kpi:nth-child(4)::before{background:linear-gradient(90deg,transparent,rgba(43,208,108,.6),transparent)}
+.kpi::after{content:"";position:absolute;top:-46px;right:-30px;width:130px;height:130px;border-radius:50%;background:radial-gradient(closest-side,rgba(245,163,1,.13),transparent);pointer-events:none}
+.kpi:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.14);box-shadow:var(--shadow-lg),inset 0 1px 0 rgba(255,255,255,.08)}
+.kpi span{font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
+.kpi b{display:block;font-size:34px;font-weight:900;letter-spacing:-.03em;margin-top:5px;line-height:1.1}
+.kpi small{color:var(--mut);font-size:12.5px}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.box{background:linear-gradient(160deg,var(--glass-hi),var(--glass-lo) 60%);border:1px solid var(--hair);border-radius:var(--rad);padding:21px 22px;box-shadow:var(--shadow-md),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.box h2{font-size:15.5px;font-weight:800;margin-bottom:12px;letter-spacing:.01em}
+.item{display:flex;gap:12px;align-items:center;padding:11px 8px;margin:0 -8px;border-bottom:1px solid var(--hair-soft);border-radius:10px;transition:background .15s var(--ease)}
+.item:last-child{border-bottom:0}
+.item:hover{background:rgba(255,255,255,.032)}
+.item .av{width:39px;height:39px;border-radius:50%;background:linear-gradient(150deg,rgba(245,163,1,.22),rgba(245,163,1,.07));border:1px solid rgba(245,163,1,.35);color:var(--ambar2);display:grid;place-items:center;font-weight:900;font-size:13px;flex:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.item b{font-size:14.5px;display:block}
+.item span{font-size:12.5px;color:var(--mut)}
+.item .tag{margin-left:auto;flex:none}
+.tag{font-size:11px;font-weight:800;letter-spacing:.04em;padding:3px 10px;border-radius:999px;border:1px solid;box-shadow:inset 0 1px 0 rgba(255,255,255,.07);white-space:nowrap}
+.tag.aguardando{color:var(--warn);border-color:rgba(245,163,1,.4);background:rgba(245,163,1,.12)}
+.tag.confirmado{color:var(--info);border-color:rgba(74,168,255,.35);background:rgba(74,168,255,.11)}
+.tag.execucao{color:var(--violet);border-color:rgba(199,146,255,.35);background:rgba(199,146,255,.11)}
+.tag.concluido{color:var(--ok);border-color:rgba(43,208,108,.35);background:rgba(43,208,108,.11)}
+.tag.novo{color:var(--warn);border-color:rgba(245,163,1,.4);background:rgba(245,163,1,.12)}
+.tag.enviado{color:var(--info);border-color:rgba(74,168,255,.35);background:rgba(74,168,255,.11)}
+.tag.aprovado{color:var(--ok);border-color:rgba(43,208,108,.35);background:rgba(43,208,108,.11)}
+.tag.recusado{color:var(--bad);border-color:rgba(255,107,94,.4);background:rgba(255,107,94,.11)}
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
+.kcol{--ca:var(--ambar);background:linear-gradient(170deg,rgba(255,255,255,.038),rgba(8,9,12,.34));border:1px solid var(--hair-soft);border-radius:var(--rad);padding:13px;min-height:200px;box-shadow:var(--shadow-md),inset 0 1px 0 rgba(255,255,255,.04);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:border-color .18s var(--ease),box-shadow .18s var(--ease)}
+.kcol[data-col-ag="aguardando"],.kcol[data-col-orc="novo"]{--ca:var(--ambar)}
+.kcol[data-col-ag="confirmado"],.kcol[data-col-orc="enviado"]{--ca:var(--info)}
+.kcol[data-col-ag="execucao"],.kcol[data-col-orc="aprovado"]{--ca:var(--violet)}
+.kcol[data-col-ag="concluido"]{--ca:var(--ok)}
+.kcol[data-col-orc="aprovado"]{--ca:var(--ok)}
+.kcol[data-col-orc="recusado"]{--ca:var(--bad)}
+.kcol h3{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin:-13px -13px 12px;padding:13px 14px 11px;border-bottom:1px solid var(--hair-soft);box-shadow:inset 0 2px 0 var(--ca);border-radius:var(--rad) var(--rad) 0 0;display:flex;justify-content:space-between;align-items:center}
+.kcol h3 span{color:var(--faint);font-size:12px;font-weight:700;background:rgba(255,255,255,.05);border:1px solid var(--hair-soft);border-radius:12px;padding:0 8px}
+.kcard{background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.028));border:1px solid var(--hair);border-left:3px solid var(--ca);border-radius:13px;padding:13px;margin-bottom:10px;cursor:grab;box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.06);transition:transform .17s var(--ease),box-shadow .17s var(--ease),border-color .17s var(--ease)}
+.kcard:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.17);box-shadow:var(--shadow-md),inset 0 1px 0 rgba(255,255,255,.08)}
+.kcard:active{cursor:grabbing}
+.kcard b{font-size:14.5px;display:block;letter-spacing:-.01em}
+.kcard span{display:block;font-size:12.5px;color:var(--mut);margin-top:2px}
+.kcard .acts{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+.kcol.drag-over{border-color:var(--ca);box-shadow:0 0 0 2px var(--ca),0 18px 40px -14px rgba(0,0,0,.6)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--hair-soft);font-size:14px;vertical-align:top}
+th{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:700;border-bottom-color:var(--hair)}
+tbody tr{transition:background .14s var(--ease)}
+tbody tr:hover td{background:rgba(255,255,255,.026)}
+td span{color:var(--mut);font-size:12.5px;display:block}
+.empty{color:var(--faint);font-size:13px;text-align:center;padding:20px 8px;border:1.5px dashed rgba(255,255,255,.13);border-radius:11px;background:rgba(255,255,255,.016)}
+.modal-bg{position:fixed;inset:0;background:rgba(4,5,7,.64);backdrop-filter:blur(9px) saturate(1.2);-webkit-backdrop-filter:blur(9px) saturate(1.2);display:none;place-items:center;z-index:80;padding:18px;overflow-y:auto}
+.modal-bg.open{display:grid}
+.modal{background:linear-gradient(165deg,rgba(38,33,22,.97),rgba(20,22,27,.98));border:1px solid rgba(255,255,255,.12);border-radius:20px;width:min(520px,100%);max-height:92vh;overflow:auto;padding:26px;box-shadow:var(--shadow-xl),inset 0 1px 0 rgba(255,255,255,.09);animation:modalIn .3s var(--ease) both}
+.modal h2{font-size:20px;font-weight:900;letter-spacing:-.015em;margin-bottom:18px}
+.f{margin-bottom:13px}
+.f label{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.f input,.f select,.f textarea{width:100%;background:rgba(0,0,0,.34);border:1px solid var(--hair);border-radius:11px;color:var(--txt);padding:11px 12px;min-height:43px;font-size:14.5px;font-family:var(--font);outline:none;transition:border-color .15s var(--ease),box-shadow .15s var(--ease),background .15s var(--ease)}
+.f textarea{min-height:0}
+.f input:hover,.f select:hover,.f textarea:hover{border-color:rgba(255,255,255,.17)}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--ambar);box-shadow:var(--ring);background:rgba(0,0,0,.45)}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal .row-btns{display:flex;gap:10px;margin-top:18px}
+.modal .row-btns .btn{flex:1;justify-content:center}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}.kanban{grid-template-columns:repeat(2,1fr)}.cols2{grid-template-columns:1fr}}
+@media(max-width:760px){.app{grid-template-columns:1fr}aside{position:sticky;top:0;z-index:60;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 14px;border-right:0;border-bottom:1px solid var(--hair-soft)}.logo{padding:0}.nav-btn{width:auto;min-height:40px;padding:8px 11px}.nav-btn:hover{transform:none}aside .foot{display:none}.kanban{display:flex;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity}.kcol{min-width:262px;flex:1 0 262px;scroll-snap-align:start}.f2{grid-template-columns:1fr}main{padding:20px 14px 52px}.topbar h1{font-size:23px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s !important;transition-duration:.001s !important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.4"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/></svg>
+      <span>Automático<small>Painel da oficina</small></span>
+    </div>
+    <button class="nav-btn sel" data-view="visao">Visão geral</button>
+    <button class="nav-btn" data-view="agenda">Agendamentos <span class="bdg" id="bdgAgenda">0</span></button>
+    <button class="nav-btn" data-view="orcamentos">Orçamentos <span class="bdg" id="bdgOrc">0</span></button>
+    <button class="nav-btn" data-view="clientes">Clientes e veículos</button>
+    <div class="foot">Demonstração funcional — os dados ficam salvos neste navegador e servem pra mostrar o painel trabalhando.</div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1 id="tituloView">Visão geral</h1>
+        <div class="hoje" id="hojeTxt"></div>
+      </div>
+      <span style="flex:1"></span>
+      <button class="btn" id="btnNovoOrc">+ Novo orçamento</button>
+      <button class="btn btn-pri" id="btnNovoAg">+ Novo agendamento</button>
+    </div>
+
+    <section class="view sel" id="view-visao">
+      <div class="kpis">
+        <div class="kpi"><span>Agendamentos hoje</span><b id="kpiHoje">0</b><small>carros esperados na oficina</small></div>
+        <div class="kpi"><span>Orçamentos novos</span><b id="kpiOrc">0</b><small>pedidos aguardando resposta</small></div>
+        <div class="kpi"><span>Em execução</span><b id="kpiExec">0</b><small>serviços acontecendo agora</small></div>
+        <div class="kpi"><span>Concluídos no mês</span><b id="kpiMes">0</b><small>serviços entregues</small></div>
+      </div>
+      <div class="cols2">
+        <div class="box"><h2>Próximos agendamentos</h2><div id="listaProx"></div></div>
+        <div class="box"><h2>Orçamentos aguardando</h2><div id="listaOrc"></div></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-agenda">
+      <div class="kanban" id="kanbanAgenda"></div>
+    </section>
+
+    <section class="view" id="view-orcamentos">
+      <div class="kanban" id="kanbanOrc"></div>
+    </section>
+
+    <section class="view" id="view-clientes">
+      <div class="box">
+        <div style="display:flex;align-items:center;margin-bottom:8px"><h2 style="margin:0">Clientes e veículos</h2><span style="flex:1"></span><button class="btn btn-pri btn-mini" id="btnNovoCli">+ Novo cliente</button></div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Cliente</th><th>Telefone</th><th>Veículo</th><th>Placa</th><th></th></tr></thead>
+          <tbody id="tbodyClientes"></tbody>
+        </table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalAg">
+  <div class="modal">
+    <h2 id="mAgTit">Novo agendamento</h2>
+    <input type="hidden" id="agId">
+    <div class="f"><label>Cliente</label><input id="agCliente" placeholder="Nome do cliente"></div>
+    <div class="f2">
+      <div class="f"><label>Veículo</label><input id="agVeiculo" placeholder="Ex.: Onix 2020"></div>
+      <div class="f"><label>Serviço</label>
+        <select id="agServico"><option>Revisão completa</option><option>Freios</option><option>Suspensão</option><option>Injeção eletrônica</option><option>Troca de óleo</option><option>Diagnóstico geral</option><option>Outro serviço</option></select>
+      </div>
+    </div>
+    <div class="f2">
+      <div class="f"><label>Data</label><input id="agData" type="date"></div>
+      <div class="f"><label>Hora</label><input id="agHora" type="time"></div>
+    </div>
+    <div class="f"><label>Status</label>
+      <select id="agStatus"><option value="aguardando">Aguardando confirmação</option><option value="confirmado">Confirmado</option><option value="execucao">Em execução</option><option value="concluido">Concluído</option></select>
+    </div>
+    <div class="row-btns">
+      <button class="btn" data-fechar>Cancelar</button>
+      <button class="btn btn-danger" id="agExcluir" style="display:none">Excluir</button>
+      <button class="btn btn-pri" id="agSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalOrc">
+  <div class="modal">
+    <h2 id="mOrcTit">Novo orçamento</h2>
+    <input type="hidden" id="orcId">
+    <div class="f"><label>Cliente</label><input id="orcCliente" placeholder="Nome do cliente"></div>
+    <div class="f2">
+      <div class="f"><label>Veículo</label><input id="orcVeiculo" placeholder="Ex.: Gol 2018"></div>
+      <div class="f"><label>Serviço</label>
+        <select id="orcServico"><option>Revisão completa</option><option>Freios</option><option>Suspensão</option><option>Injeção eletrônica</option><option>Troca de óleo</option><option>Diagnóstico geral</option><option>Outro serviço</option></select>
+      </div>
+    </div>
+    <div class="f"><label>Detalhes do pedido</label><textarea id="orcDetalhe" rows="3" placeholder="O que o cliente contou: barulho, sintoma, urgência..."></textarea></div>
+    <div class="f"><label>Status</label>
+      <select id="orcStatus"><option value="novo">Novo pedido</option><option value="enviado">Orçamento enviado</option><option value="aprovado">Aprovado</option><option value="recusado">Recusado</option></select>
+    </div>
+    <div class="row-btns">
+      <button class="btn" data-fechar>Cancelar</button>
+      <button class="btn btn-danger" id="orcExcluir" style="display:none">Excluir</button>
+      <button class="btn btn-pri" id="orcSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalCli">
+  <div class="modal">
+    <h2 id="mCliTit">Novo cliente</h2>
+    <input type="hidden" id="cliId">
+    <div class="f"><label>Nome</label><input id="cliNome" placeholder="Nome do cliente"></div>
+    <div class="f"><label>Telefone / WhatsApp</label><input id="cliTel" placeholder="(35) 9....-...."></div>
+    <div class="f2">
+      <div class="f"><label>Veículo</label><input id="cliVeiculo" placeholder="Ex.: HB20 2022"></div>
+      <div class="f"><label>Placa</label><input id="cliPlaca" placeholder="Ex.: ABC-1D23"></div>
+    </div>
+    <div class="row-btns">
+      <button class="btn" data-fechar>Cancelar</button>
+      <button class="btn btn-danger" id="cliExcluir" style="display:none">Excluir</button>
+      <button class="btn btn-pri" id="cliSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var KEY = "painel-automatico-v1";
+var $ = function(s){ return document.querySelector(s); };
+function hojeISO(d){ d = d||new Date(); var m=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0"); return d.getFullYear()+"-"+m+"-"+dd; }
+function addDias(n){ var d=new Date(); d.setDate(d.getDate()+n); return hojeISO(d); }
+function uid(){ return "id"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function seed(){
+  return {
+    agendamentos:[
+      {id:uid(), cliente:"Marcos Tavares", veiculo:"Onix 2020", servico:"Freios", data:hojeISO(), hora:"09:00", status:"confirmado"},
+      {id:uid(), cliente:"Juliana Prado", veiculo:"HB20 2022", servico:"Revisão completa", data:hojeISO(), hora:"10:30", status:"aguardando"},
+      {id:uid(), cliente:"Roberto Sales", veiculo:"Hilux 2019", servico:"Suspensão", data:hojeISO(), hora:"08:00", status:"execucao"},
+      {id:uid(), cliente:"Ana Beatriz Lima", veiculo:"Argo 2021", servico:"Troca de óleo", data:addDias(1), hora:"08:30", status:"confirmado"},
+      {id:uid(), cliente:"Paulo Ferreira", veiculo:"Civic 2018", servico:"Injeção eletrônica", data:addDias(-2), hora:"14:00", status:"concluido"},
+      {id:uid(), cliente:"Fernanda Rocha", veiculo:"Compass 2023", servico:"Revisão completa", data:addDias(-5), hora:"09:30", status:"concluido"}
+    ],
+    orcamentos:[
+      {id:uid(), cliente:"Carlos Nogueira", veiculo:"Gol 2017", servico:"Freios", detalhe:"Pastilha assobiando há uma semana.", status:"novo"},
+      {id:uid(), cliente:"Beatriz Melo", veiculo:"Kwid 2021", servico:"Diagnóstico geral", detalhe:"Luz da injeção acendeu no painel.", status:"novo"},
+      {id:uid(), cliente:"Diego Santos", veiculo:"Strada 2020", servico:"Suspensão", detalhe:"Barulho na frente ao passar em lombada.", status:"enviado"},
+      {id:uid(), cliente:"Luciana Alves", veiculo:"Mobi 2019", servico:"Troca de óleo", detalhe:"Troca de óleo e filtro, carro de trabalho.", status:"aprovado"}
+    ],
+    clientes:[
+      {id:uid(), nome:"Marcos Tavares", tel:"(35) 98811-2034", veiculo:"Onix 2020", placa:"QPA-4B21"},
+      {id:uid(), nome:"Juliana Prado", tel:"(35) 99745-8810", veiculo:"HB20 2022", placa:"RHT-7C02"},
+      {id:uid(), nome:"Roberto Sales", tel:"(35) 99120-5547", veiculo:"Hilux 2019", placa:"PKM-2A98"},
+      {id:uid(), nome:"Ana Beatriz Lima", tel:"(35) 98433-7712", veiculo:"Argo 2021", placa:"SDF-5E44"},
+      {id:uid(), nome:"Carlos Nogueira", tel:"(35) 99902-3365", veiculo:"Gol 2017", placa:"HJK-9F17"}
+    ]
+  };
+}
+var db;
+try { db = JSON.parse(localStorage.getItem(KEY)) || seed(); }
+catch(e){ db = seed(); }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e){} }
+save();
+
+var AG_COLS = [
+  {k:"aguardando", t:"Aguardando confirmação"},
+  {k:"confirmado", t:"Confirmado"},
+  {k:"execucao", t:"Em execução"},
+  {k:"concluido", t:"Concluído"}
+];
+var ORC_COLS = [
+  {k:"novo", t:"Novo pedido"},
+  {k:"enviado", t:"Orçamento enviado"},
+  {k:"aprovado", t:"Aprovado"},
+  {k:"recusado", t:"Recusado"}
+];
+var TITULOS = {visao:"Visão geral", agenda:"Agendamentos", orcamentos:"Orçamentos", clientes:"Clientes e veículos"};
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function fmtData(iso){ if(!iso) return ""; var p=iso.split("-"); return p.length===3 ? p[2]+"/"+p[1] : iso; }
+function iniciais(n){ return String(n||"?").trim().split(/\s+/).slice(0,2).map(function(w){ return w[0]; }).join("").toUpperCase(); }
+
+var view = "visao";
+function setView(v){
+  view = v;
+  document.querySelectorAll(".nav-btn").forEach(function(b){ b.classList.toggle("sel", b.getAttribute("data-view")===v); });
+  document.querySelectorAll(".view").forEach(function(s){ s.classList.toggle("sel", s.id==="view-"+v); });
+  $("#tituloView").textContent = TITULOS[v];
+  render();
+}
+document.querySelectorAll(".nav-btn").forEach(function(b){ b.addEventListener("click", function(){ setView(b.getAttribute("data-view")); }); });
+
+function kpis(){
+  var h = hojeISO();
+  $("#kpiHoje").textContent = db.agendamentos.filter(function(a){ return a.data===h && a.status!=="concluido"; }).length;
+  $("#kpiOrc").textContent = db.orcamentos.filter(function(o){ return o.status==="novo"; }).length;
+  $("#kpiExec").textContent = db.agendamentos.filter(function(a){ return a.status==="execucao"; }).length;
+  var mes = h.slice(0,7);
+  $("#kpiMes").textContent = db.agendamentos.filter(function(a){ return a.status==="concluido" && (a.data||"").slice(0,7)===mes; }).length;
+  $("#bdgAgenda").textContent = db.agendamentos.filter(function(a){ return a.status==="aguardando"; }).length;
+  $("#bdgOrc").textContent = db.orcamentos.filter(function(o){ return o.status==="novo"; }).length;
+}
+function listaProx(){
+  var h = hojeISO();
+  var prox = db.agendamentos.filter(function(a){ return a.status!=="concluido" && a.data>=h; })
+    .sort(function(x,y){ return (x.data+x.hora).localeCompare(y.data+y.hora); }).slice(0,5);
+  $("#listaProx").innerHTML = prox.length ? prox.map(function(a){
+    return '<div class="item"><div class="av">'+esc(iniciais(a.cliente))+'</div><div><b>'+esc(a.cliente)+'</b><span>'+esc(a.veiculo)+' · '+esc(a.servico)+'</span></div><span class="tag '+a.status+'">'+fmtData(a.data)+(a.hora?' · '+esc(a.hora):'')+'</span></div>';
+  }).join("") : '<div class="empty">Nenhum agendamento próximo.</div>';
+}
+function listaOrc(){
+  var pend = db.orcamentos.filter(function(o){ return o.status==="novo"; }).slice(0,5);
+  $("#listaOrc").innerHTML = pend.length ? pend.map(function(o){
+    return '<div class="item"><div class="av">'+esc(iniciais(o.cliente))+'</div><div><b>'+esc(o.cliente)+'</b><span>'+esc(o.veiculo)+' · '+esc(o.servico)+'</span></div><span class="tag novo">novo</span></div>';
+  }).join("") : '<div class="empty">Nenhum orçamento aguardando. Tudo respondido!</div>';
+}
+function cardAg(a){
+  return '<div class="kcard" draggable="true" data-drag-ag="'+a.id+'"><b>'+esc(a.cliente)+'</b><span>'+esc(a.veiculo)+' · '+esc(a.servico)+'</span><span>'+fmtData(a.data)+(a.hora?' às '+esc(a.hora):'')+'</span><div class="acts"><button class="btn btn-mini" data-edit-ag="'+a.id+'">Editar</button>'+(a.status!=="concluido" ? '<button class="btn btn-mini" data-move-ag="'+a.id+'">Avançar →</button>' : '')+'</div></div>';
+}
+function cardOrc(o){
+  return '<div class="kcard" draggable="true" data-drag-orc="'+o.id+'"><b>'+esc(o.cliente)+'</b><span>'+esc(o.veiculo)+' · '+esc(o.servico)+'</span>'+(o.detalhe?'<span>'+esc(o.detalhe)+'</span>':'')+'<div class="acts"><button class="btn btn-mini" data-edit-orc="'+o.id+'">Editar</button>'+(o.status==="aprovado" ? '<button class="btn btn-mini" data-agendar-orc="'+o.id+'">Virar agendamento</button>' : '')+'</div></div>';
+}
+function kanban(el, cols, items, cardFn, tipo){
+  el.innerHTML = cols.map(function(c){
+    var its = items.filter(function(i){ return i.status===c.k; });
+    return '<div class="kcol" data-col-'+tipo+'="'+c.k+'"><h3>'+c.t+'<span>'+its.length+'</span></h3>'+(its.length ? its.map(cardFn).join("") : '<div class="empty">Nada aqui</div>')+'</div>';
+  }).join("");
+}
+function tabelaClientes(){
+  $("#tbodyClientes").innerHTML = db.clientes.length ? db.clientes.map(function(c){
+    return '<tr><td><b>'+esc(c.nome)+'</b></td><td>'+esc(c.tel)+'</td><td>'+esc(c.veiculo)+'</td><td>'+esc(c.placa)+'</td><td style="text-align:right"><button class="btn btn-mini" data-edit-cli="'+c.id+'">Editar</button></td></tr>';
+  }).join("") : '<tr><td colspan="5"><div class="empty">Nenhum cliente cadastrado ainda.</div></td></tr>';
+}
+function render(){ kpis(); listaProx(); listaOrc(); kanban($("#kanbanAgenda"), AG_COLS, db.agendamentos, cardAg, "ag"); kanban($("#kanbanOrc"), ORC_COLS, db.orcamentos, cardOrc, "orc"); tabelaClientes(); bindDinamicos(); }
+
+function bindDinamicos(){
+  document.querySelectorAll("[data-edit-ag]").forEach(function(b){ b.addEventListener("click", function(){ abrirAg(b.getAttribute("data-edit-ag")); }); });
+  document.querySelectorAll("[data-move-ag]").forEach(function(b){ b.addEventListener("click", function(){
+    var a = db.agendamentos.find(function(x){ return x.id===b.getAttribute("data-move-ag"); });
+    if (!a) return;
+    var idx = AG_COLS.findIndex(function(c){ return c.k===a.status; });
+    if (idx < AG_COLS.length-1){ a.status = AG_COLS[idx+1].k; save(); render(); }
+  }); });
+  document.querySelectorAll("[data-edit-orc]").forEach(function(b){ b.addEventListener("click", function(){ abrirOrc(b.getAttribute("data-edit-orc")); }); });
+  document.querySelectorAll("[data-agendar-orc]").forEach(function(b){ b.addEventListener("click", function(){
+    var o = db.orcamentos.find(function(x){ return x.id===b.getAttribute("data-agendar-orc"); });
+    if (!o) return;
+    db.agendamentos.unshift({id:uid(), cliente:o.cliente, veiculo:o.veiculo, servico:o.servico, data:hojeISO(), hora:"", status:"aguardando"});
+    save(); setView("agenda");
+  }); });
+  document.querySelectorAll("[data-edit-cli]").forEach(function(b){ b.addEventListener("click", function(){ abrirCli(b.getAttribute("data-edit-cli")); }); });
+  bindDrag("[data-drag-ag]", "agendamentos", "data-col-ag");
+  bindDrag("[data-drag-orc]", "orcamentos", "data-col-orc");
+}
+function bindDrag(sel, colecao, colAttr){
+  document.querySelectorAll(sel).forEach(function(card){
+    card.addEventListener("dragstart", function(ev){
+      var id = card.getAttribute(sel.slice(1,-1));
+      ev.dataTransfer.setData("text/plain", colecao+":"+id);
+    });
+  });
+  document.querySelectorAll("["+colAttr+"]").forEach(function(col){
+    col.addEventListener("dragover", function(ev){ ev.preventDefault(); col.classList.add("drag-over"); });
+    col.addEventListener("dragleave", function(){ col.classList.remove("drag-over"); });
+    col.addEventListener("drop", function(ev){
+      ev.preventDefault(); col.classList.remove("drag-over");
+      var partes = (ev.dataTransfer.getData("text/plain")||"").split(":");
+      if (partes[0]!==colecao) return;
+      var item = db[colecao].find(function(x){ return x.id===partes[1]; });
+      if (item){ item.status = col.getAttribute(colAttr); save(); render(); }
+    });
+  });
+}
+
+/* ---- modais ---- */
+function abrirModal(id){ $(id).classList.add("open"); }
+function fecharModais(){ document.querySelectorAll(".modal-bg").forEach(function(m){ m.classList.remove("open"); }); }
+document.querySelectorAll("[data-fechar]").forEach(function(b){ b.addEventListener("click", fecharModais); });
+document.querySelectorAll(".modal-bg").forEach(function(m){ m.addEventListener("click", function(ev){ if (ev.target===m) fecharModais(); }); });
+
+function abrirAg(id){
+  var a = id ? db.agendamentos.find(function(x){ return x.id===id; }) : null;
+  $("#mAgTit").textContent = a ? "Editar agendamento" : "Novo agendamento";
+  $("#agId").value = a ? a.id : "";
+  $("#agCliente").value = a ? a.cliente : "";
+  $("#agVeiculo").value = a ? a.veiculo : "";
+  $("#agServico").value = a ? a.servico : "Revisão completa";
+  $("#agData").value = a ? a.data : hojeISO();
+  $("#agHora").value = a ? (a.hora||"") : "";
+  $("#agStatus").value = a ? a.status : "aguardando";
+  $("#agExcluir").style.display = a ? "" : "none";
+  abrirModal("#modalAg");
+}
+function abrirOrc(id){
+  var o = id ? db.orcamentos.find(function(x){ return x.id===id; }) : null;
+  $("#mOrcTit").textContent = o ? "Editar orçamento" : "Novo orçamento";
+  $("#orcId").value = o ? o.id : "";
+  $("#orcCliente").value = o ? o.cliente : "";
+  $("#orcVeiculo").value = o ? o.veiculo : "";
+  $("#orcServico").value = o ? o.servico : "Revisão completa";
+  $("#orcDetalhe").value = o ? (o.detalhe||"") : "";
+  $("#orcStatus").value = o ? o.status : "novo";
+  $("#orcExcluir").style.display = o ? "" : "none";
+  abrirModal("#modalOrc");
+}
+function abrirCli(id){
+  var c = id ? db.clientes.find(function(x){ return x.id===id; }) : null;
+  $("#mCliTit").textContent = c ? "Editar cliente" : "Novo cliente";
+  $("#cliId").value = c ? c.id : "";
+  $("#cliNome").value = c ? c.nome : "";
+  $("#cliTel").value = c ? c.tel : "";
+  $("#cliVeiculo").value = c ? c.veiculo : "";
+  $("#cliPlaca").value = c ? c.placa : "";
+  $("#cliExcluir").style.display = c ? "" : "none";
+  abrirModal("#modalCli");
+}
+$("#btnNovoAg").addEventListener("click", function(){ abrirAg(null); });
+$("#btnNovoOrc").addEventListener("click", function(){ abrirOrc(null); });
+$("#btnNovoCli").addEventListener("click", function(){ abrirCli(null); });
+
+$("#agSalvar").addEventListener("click", function(){
+  var id = $("#agId").value;
+  var dados = {cliente:$("#agCliente").value.trim(), veiculo:$("#agVeiculo").value.trim(), servico:$("#agServico").value, data:$("#agData").value, hora:$("#agHora").value, status:$("#agStatus").value};
+  if (!dados.cliente) { $("#agCliente").focus(); return; }
+  if (id){ var a = db.agendamentos.find(function(x){ return x.id===id; }); Object.assign(a, dados); }
+  else { db.agendamentos.unshift(Object.assign({id:uid()}, dados)); }
+  save(); fecharModais(); render();
+});
+$("#agExcluir").addEventListener("click", function(){
+  db.agendamentos = db.agendamentos.filter(function(x){ return x.id!==$("#agId").value; });
+  save(); fecharModais(); render();
+});
+$("#orcSalvar").addEventListener("click", function(){
+  var id = $("#orcId").value;
+  var dados = {cliente:$("#orcCliente").value.trim(), veiculo:$("#orcVeiculo").value.trim(), servico:$("#orcServico").value, detalhe:$("#orcDetalhe").value.trim(), status:$("#orcStatus").value};
+  if (!dados.cliente) { $("#orcCliente").focus(); return; }
+  if (id){ var o = db.orcamentos.find(function(x){ return x.id===id; }); Object.assign(o, dados); }
+  else { db.orcamentos.unshift(Object.assign({id:uid()}, dados)); }
+  save(); fecharModais(); render();
+});
+$("#orcExcluir").addEventListener("click", function(){
+  db.orcamentos = db.orcamentos.filter(function(x){ return x.id!==$("#orcId").value; });
+  save(); fecharModais(); render();
+});
+$("#cliSalvar").addEventListener("click", function(){
+  var id = $("#cliId").value;
+  var dados = {nome:$("#cliNome").value.trim(), tel:$("#cliTel").value.trim(), veiculo:$("#cliVeiculo").value.trim(), placa:$("#cliPlaca").value.trim()};
+  if (!dados.nome) { $("#cliNome").focus(); return; }
+  if (id){ var c = db.clientes.find(function(x){ return x.id===id; }); Object.assign(c, dados); }
+  else { db.clientes.unshift(Object.assign({id:uid()}, dados)); }
+  save(); fecharModais(); render();
+});
+$("#cliExcluir").addEventListener("click", function(){
+  db.clientes = db.clientes.filter(function(x){ return x.id!==$("#cliId").value; });
+  save(); fecharModais(); render();
+});
+
+var dias = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+var meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+var agora = new Date();
+$("#hojeTxt").textContent = dias[agora.getDay()] + ", " + agora.getDate() + " de " + meses[agora.getMonth()] + " de " + agora.getFullYear();
+render();
+})();
+</script>
+</body>
+</html>
